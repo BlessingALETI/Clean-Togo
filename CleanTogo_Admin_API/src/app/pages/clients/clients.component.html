@@ -1,0 +1,47 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Gestion des clients</h2>
+  </div>
+</div>
+
+<div class="ct-card mb-3">
+  <div class="d-flex gap-2">
+    <input class="form-control" [(ngModel)]="q" (input)="apply()" placeholder="Rechercher (nom, téléphone, quartier)..." />
+    <button class="btn btn-outline-secondary" (click)="q=''; apply()">Reset</button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<div class="ct-card" *ngIf="!loading">
+  <table class="table table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Contact</th>
+        <th>Quartier</th>
+        <th>Abonnement</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of filtered">
+        <td class="fw-semibold">{{ c.fullName }}</td>
+        <td>{{ c.phone }}</td>
+        <td>{{ c.quartier }}</td>
+        <td><span class="badge bg-success-subtle text-success">{{ c.abonnement }}</span></td>
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'bg-success-subtle text-success': c.status==='Actif',
+              'bg-warning-subtle text-warning': c.status==='En attente',
+              'bg-danger-subtle text-danger': c.status==='Suspendu'
+            }">{{ c.status }}</span>
+        </td>
+      </tr>
+      <tr *ngIf="filtered.length===0">
+        <td colspan="5"><app-table-empty message="Aucun client trouvé."></app-table-empty></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

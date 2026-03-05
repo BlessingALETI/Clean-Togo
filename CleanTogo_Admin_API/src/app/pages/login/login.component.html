@@ -1,0 +1,20 @@
+<div class="container py-5" style="max-width: 520px;">
+  <div class="ct-card shadow-sm">
+    <h3 class="mb-1">CleanTogo</h3>
+    <div class="text-muted mb-3">Connexion administrateur</div>
+
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <label class="form-label">Email</label>
+    <input class="form-control mb-3" [(ngModel)]="email" placeholder="admin&#64;cleantogo.tg" />
+
+    <label class="form-label">Mot de passe</label>
+    <input type="password" class="form-control mb-3" [(ngModel)]="password" placeholder="admin123" />
+
+    <button class="btn btn-success w-100" (click)="submit()">Se connecter</button>
+
+    <div class="small text-muted mt-3">
+      Démo: <b>admin&#64;cleantogo.tg</b> / <b>admin123</b>
+    </div>
+  </div>
+</div>

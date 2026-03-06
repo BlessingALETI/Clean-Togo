@@ -158,10 +158,20 @@ class CourseModel {
     final d = dateTime;
     if (d == null) return 'Date inconnue';
     const mois = [
-      'Jan','Fév','Mar','Avr','Mai','Jun',
-      'Jul','Aoû','Sep','Oct','Nov','Déc'
+      'Jan',
+      'Fév',
+      'Mar',
+      'Avr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Aoû',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Déc'
     ];
-    const jours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const jours = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     return '${jours[d.weekday - 1]} ${d.day} ${mois[d.month - 1]} ${d.year}';
   }
 }
@@ -215,15 +225,16 @@ class ReclamationModel {
 
   ReclamationModel({this.id, required this.objet, required this.description});
 
-  factory ReclamationModel.fromJson(Map<String, dynamic> j) =>
-      ReclamationModel(
+  factory ReclamationModel.fromJson(Map<String, dynamic> j) => ReclamationModel(
         id: j['id']?.toString(),
         objet: j['objet'] ?? '',
         description: j['description'] ?? '',
       );
 
-  Map<String, dynamic> toJson() =>
-      {if (id != null) 'id': id, 'objet': objet, 'description': description};
+  Map<String, dynamic> toJson() => {
+        'objet': objet,
+        'description': description,
+      };
 }
 
 class AuthResponse {

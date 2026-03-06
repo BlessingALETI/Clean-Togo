@@ -15,6 +15,7 @@ class ApiService {
   // ⚠️ Émulateur Android  → http://10.0.2.2:8080
   // ⚠️ Téléphone réel     → http://192.168.X.X:8080
   // ⚠️ Flutter Web Chrome → http://localhost:8080
+
   static const String baseUrl = 'http://10.0.2.2:8080';
 
   static final ApiService _i = ApiService._();
@@ -34,8 +35,7 @@ class ApiService {
       (await SharedPreferences.getInstance()).setString('userId', v);
   Future<String?> getUserId() async =>
       (await SharedPreferences.getInstance()).getString('userId');
-  Future<void> clear() async =>
-      (await SharedPreferences.getInstance()).clear();
+  Future<void> clear() async => (await SharedPreferences.getInstance()).clear();
 
   Future<Map<String, String>> get _headers async {
     final t = await getToken();
@@ -128,8 +128,7 @@ class ApiService {
     }
   }
 
-  Future<ClientModel> updateClient(
-      String id, Map<String, dynamic> data) async {
+  Future<ClientModel> updateClient(String id, Map<String, dynamic> data) async {
     final r = await http
         .put(Uri.parse('$baseUrl/clients/update/$id'),
             headers: await _headers, body: jsonEncode(data))
@@ -213,9 +212,14 @@ class ApiService {
   }
 
   Future<ReclamationModel> saveReclamation(ReclamationModel rec) async {
+    final body = jsonEncode({
+      'objet': rec.objet,
+      'description': rec.description,
+    });
+    print('saveReclamation body: $body'); // debug
     final r = await http
         .post(Uri.parse('$baseUrl/commentaireReclamations/save'),
-            headers: await _headers, body: jsonEncode(rec.toJson()))
+            headers: await _headers, body: body)
         .timeout(const Duration(seconds: 15));
     _check(r);
     return ReclamationModel.fromJson(jsonDecode(r.body));

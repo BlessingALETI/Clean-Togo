@@ -6,6 +6,8 @@ import 'package:clean_togo/ui/auth/register_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -17,6 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  final storage = const FlutterSecureStorage(); // Ajoute cette ligne
+
+
   String selectedRole = 'Chauffeur';
   bool _isLoading = false;
 
@@ -25,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('${ApiService.baseUrl}/auth/authenticate'),
+        Uri.parse('${ApiService.baseUrl_auth}/auth/authenticate'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "email": _emailController.text.trim(),
@@ -35,12 +40,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        String token = data['token']; // Récupère le token renvoyé par Spring Security
 
-        // STOCKER LE TOKEN (ex: avec flutter_secure_storage)
-        // await storage.write(key: 'jwt', value: token);
+        // Vérifie bien le nom du champ dans ton JSON Spring Boot (souvent 'token' ou 'accessToken')
+        String token = data['token'];
 
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const DashboardScreen()), (route) => false);
+        // ON SAUVEGARDE RÉELLEMENT LE TOKEN ICI
+        await storage.write(key: 'jwt', value: token);
+
+        // Petit print pour débugger dans ta console
+        debugPrint("Token enregistré avec succès !");
+
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                (route) => false
+        );
       } else {
         _showError("Email ou mot de passe incorrect.");
       }

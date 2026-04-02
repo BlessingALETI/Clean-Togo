@@ -1,9 +1,13 @@
+import 'dart:convert';
+import 'package:clean_togo/service/api_service.dart';
 import 'package:clean_togo/ui/auth/login_screen.dart';
 import 'package:clean_togo/ui/history/history_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // N'oublie pas le flutter pub add url_launcher
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,195 +17,207 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final storage = const FlutterSecureStorage();
+
   bool _isTourneeLancee = false;
-  String _userName = "Chargement...";
+  List<dynamic> _courses = [];
+  bool _isLoading = true;
+  String _userName = "Chauffeur";
+
   String _userQuartier = "Lomé, Togo";
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _fetchDashboardData();
   }
 
-  // Récupère les infos du profil (Nom/Quartier)
-  Future<void> _loadUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      var doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists && mounted) {
-        setState(() {
-          _userName = doc.get('nom') ?? "Chauffeur";
-          _userQuartier = doc.get('quartier') ?? "Lomé, Togo";
-        });
+  // Récupération filtrée par rapport au chauffeur connecté
+  Future<void> _fetchDashboardData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      // RÉCUPÉRATION DU VRAI TOKEN
+      final storage = const FlutterSecureStorage();
+      String? token = await storage.read(key: 'jwt');
+
+      if (token == null) {
+        debugPrint("Erreur : Aucun token trouvé");
+        setState(() => _isLoading = false);
+        return;
       }
-    }
-  }
 
-  // Fonction pour ouvrir Google Maps avec une adresse texte
-  Future<void> _ouvrirItineraire(String adresse) async {
-    final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(adresse)}");
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+      final response = await ApiService.getRequest("courses/findAll", token);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          _courses = data;
+          _isLoading = false;
+        });
+      } else {
+        // TRÈS IMPORTANT : Arrêter le chargement même si le serveur répond une erreur
+        debugPrint("Erreur Serveur : ${response.statusCode}");
+        setState(() => _isLoading = false);
+
+        // Optionnel : Afficher un message à l'utilisateur
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erreur serveur (${response.statusCode})"))
+        );
+      }
+    } catch (e) {
+      debugPrint("Exception attrapée : $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final String? uid = FirebaseAuth.instance.currentUser?.uid;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E7E44),
         title: const Text("Clean Togo", style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white), // Pour voir le menu
       ),
       drawer: _buildDrawer(),
-      body: StreamBuilder<QuerySnapshot>(
-        // ON CHERCHE LA COURSE DU CHAUFFEUR
-        stream: FirebaseFirestore.instance
-            .collection('courses')
-            .where('chauffeurId', isEqualTo: uid)
-            .snapshots(),
-          // ... à l'intérieur du StreamBuilder des courses ...
-          builder: (context, courseSnapshot) {
-            if (!courseSnapshot.hasData) return const CircularProgressIndicator();
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _courses.isEmpty
+          ? _buildPasDeTache()
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            for (var course in _courses)
+              _buildCourseSection(course),
 
-            // Liste de toutes les courses (secteurs) assignées
-            var toutesLesCourses = courseSnapshot.data!.docs;
-
-            if (toutesLesCourses.isEmpty) return _buildPasDeTache();
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // On boucle sur CHAQUE course pour afficher son secteur et ses foyers
-                  for (var course in toutesLesCourses)
-                    Column(
-                      children: [
-                        _buildHeaderStats(course['secteur']), // Le compteur pour ce secteur
-                        const SizedBox(height: 10),
-                        if (_isTourneeLancee)
-                          _buildListeFoyers(course['secteur']), // Les foyers de ce secteur
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-
-                  if (!_isTourneeLancee) _buildBoutonAction("Démarrer la tournée", () {
-                    setState(() => _isTourneeLancee = true);
-                  }),
-                ],
-              ),
-            );
-          }
+            if (!_isTourneeLancee)
+              _buildBoutonAction("Démarrer la tournée", () {
+                setState(() => _isTourneeLancee = true);
+              }),
+          ],
+        ),
       ),
     );
   }
 
-  // --- BLOCS DE CONSTRUCTION UI ---
+  Widget _buildCourseSection(dynamic course) {
+    // Une course contient des secteurs
+    List<dynamic> secteurs = course['secteurs'] ?? [];
 
-  // Affiche le nombre de foyers en attente dans le secteur
-  Widget _buildHeaderStats(String secteur) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('foyers')
-          .where('secteur', isEqualTo: secteur)
-          .where('statut', isEqualTo: 'en_attente')
-          .snapshots(),
-      builder: (context, snapshot) {
-        int nb = snapshot.hasData ? snapshot.data!.docs.length : 0;
-        return Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.location_on, color: Color(0xFF1E7E44)),
-              Text(" Secteur $secteur : $nb foyers", style: const TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-        );
-      },
-    );
-  }
-  Widget _buildListeFoyers(String secteur) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('foyers')
-          .where('secteur', isEqualTo: secteur)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Text("Chargement...");
-        var docs = snapshot.data!.docs;
-
-        return Column(
-          children: docs.map((foyer) {
-            // On vérifie le statut pour changer l'apparence
-            bool estTermine = foyer['statut'] == 'termine';
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              color: estTermine ? Colors.green.shade50 : Colors.white,
-              child: ListTile(
-                leading: Icon(
-                  estTermine ? Icons.check_circle : Icons.home,
-                  color: estTermine ? Colors.green : const Color(0xFF1E7E44),
-                ),
-                title: Text(foyer['nom'],
-                    style: TextStyle(decoration: estTermine ? TextDecoration.lineThrough : null)),
-                subtitle: Text(foyer['adresse']),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Bouton GPS
-                    IconButton(
-                      icon: const Icon(Icons.map, color: Colors.blue),
-                      onPressed: estTermine ? null : () => _ouvrirItineraire(foyer['adresse']),
-                    ),
-                    // Bouton Valider
-                    if (!estTermine)
-                      IconButton(
-                        icon: const Icon(Icons.done_all, color: Colors.green),
-                        onPressed: () => _validerCollecte(foyer.id),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
-  Widget _buildEcranAttente() {
-    return const Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 40),
-        Icon(Icons.local_shipping, size: 100, color: Colors.grey),
-        Text("Prêt pour la collecte ?", style: TextStyle(fontSize: 18, color: Colors.grey)),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Text("Course du : ${course['date_passage'] ?? ''}",
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+        ),
+        ...secteurs.map((secteur) => Column(
+          children: [
+            _buildSecteurHeader(secteur),
+            if (_isTourneeLancee) _buildListeFoyersREST(secteur['foyers'] ?? []),
+            const SizedBox(height: 20),
+          ],
+        )).toList(),
+        const Divider(),
       ],
     );
   }
 
-  Widget _buildPasDeTache() {
-    return const Center(
-      child: Text("Aucun secteur ne vous est assigné pour le moment."),
-    );
-  }
+  Widget _buildSecteurHeader(dynamic secteur) {
+    // On récupère la liste des foyers du secteur
+    List<dynamic> foyers = secteur['foyers'] ?? [];
 
-  Widget _buildBoutonAction(String label, VoidCallback action) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E7E44)),
-        onPressed: action,
-        child: Text(label, style: const TextStyle(color: Colors.white)),
+    // On compte UNIQUEMENT ceux qui ne sont pas encore terminés
+    int nbRestant = foyers.where((f) => f['statut'] != 'termine').length;
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF1E7E44).withOpacity(0.3))
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.map_outlined, color: Color(0xFF1E7E44)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Secteur : ${secteur['nom_secteur']}",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E7E44),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              "$nbRestant foyers",
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildListeFoyersREST(List<dynamic> foyers) {
+    return Column(
+      children: foyers.map((foyer) {
+        bool estTermine = foyer['statut'] == 'termine';
+        String adresseFoyer = foyer['adresse'] ?? "Lomé, Togo";
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+          child: ListTile(
+            leading: IconButton(
+              icon: const Icon(Icons.directions, color: Colors.blue), // Icône de navigation
+              onPressed: () => _ouvrirCarte(adresseFoyer),
+              tooltip: "Tracer l'itinéraire",
+            ),
+            title: Text(foyer['nom'] ?? "Foyer"),
+            subtitle: Text(adresseFoyer),
+            trailing: IconButton(
+              icon: Icon(
+                  Icons.check_circle,
+                  color: estTermine ? Colors.green : Colors.grey
+              ),
+              onPressed: estTermine ? null : () => _validerCollecteREST(foyer['id']),
+            ),
+
+          ),
+        );
+      }).toList(),
+    );
+  }
+  Future<void> _validerCollecteREST(int foyerId) async {
+    try {
+      String? token = await storage.read(key: 'jwt');
+
+      final response = await http.put(
+        Uri.parse("${ApiService.baseUrl}/foyers/update-statut/$foyerId"),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({"statut": "termine"}),
+      );
+
+      if (response.statusCode == 200) {
+        _fetchDashboardData(); // On recharge les données pour mettre à jour le compteur et les couleurs
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la validation : $e");
+    }
+  }
   Widget _buildDrawer() {
     return Drawer(
       child: Column(
@@ -250,21 +266,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // Fonction pour marquer le ramassage comme terminé dans Firestore
-  Future<void> _validerCollecte(String foyerId) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('foyers')
-          .doc(foyerId)
-          .update({'statut': 'termine'}); // On change le statut de 'en_attente' à 'termine'
+  Widget _buildPasDeTache() {
+    return const Center(
+      child: Text("Aucun secteur ne vous est assigné pour le moment."),
+    );
+  }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Collecte validée avec succès !"), backgroundColor: Colors.green),
-        );
-      }
-    } catch (e) {
-      debugPrint("Erreur lors de la validation : $e");
+  Widget _buildBoutonAction(String label, VoidCallback action) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E7E44)),
+        onPressed: action,
+        child: Text(label, style: const TextStyle(color: Colors.white)),
+      ),
+    );
+  }
+
+
+  Future<void> _ouvrirCarte(String adresse) async {
+    // On encode l'adresse pour qu'elle soit lisible par une URL (remplace les espaces par des +)
+    final String googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(adresse)}";
+
+    final Uri url = Uri.parse(googleMapsUrl);
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint("Impossible d'ouvrir la carte pour l'adresse : $adresse");
     }
   }
+
 }
+

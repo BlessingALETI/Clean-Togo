@@ -1,0 +1,70 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Planification des tournées</h2>
+  </div>
+  <button class="btn btn-success" (click)="creating = !creating">
+    {{ creating ? 'Fermer' : 'Créer une tournée' }}
+  </button>
+</div>
+
+<div class="ct-card mb-3" *ngIf="creating">
+  <div class="row g-2">
+    <div class="col-12 col-md-3">
+      <label class="form-label">Date</label>
+      <input class="form-control" type="date" [(ngModel)]="dateISO" />
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label">Zone</label>
+      <input class="form-control" [(ngModel)]="zone" placeholder="Ex: Bè-Kpota" />
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label">Chauffeur</label>
+      <select class="form-select" [(ngModel)]="driverId">
+        <option [ngValue]="null">Non assigné</option>
+        <option *ngFor="let d of drivers" [ngValue]="d.id">{{ d.fullName }}</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-2">
+      <label class="form-label">Foyers</label>
+      <input class="form-control" type="number" [(ngModel)]="foyersCount" />
+    </div>
+    <div class="col-12 col-md-1 d-flex align-items-end">
+      <button class="btn btn-primary w-100" (click)="create()">OK</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<div class="ct-card" *ngIf="!loading">
+  <table class="table table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Zone</th>
+        <th>Chauffeur</th>
+        <th>Foyers</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of tours">
+        <td>{{ t.dateISO }}</td>
+        <td class="fw-semibold">{{ t.zone }}</td>
+        <td>{{ driverName(t.driverId) }}</td>
+        <td>{{ t.foyersCount }}</td>
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'bg-secondary-subtle text-secondary': t.status==='Planifiée',
+              'bg-warning-subtle text-warning': t.status==='En cours',
+              'bg-success-subtle text-success': t.status==='Terminée'
+            }">{{ t.status }}</span>
+        </td>
+      </tr>
+      <tr *ngIf="tours.length===0">
+        <td colspan="5"><app-table-empty message="Aucune tournée."></app-table-empty></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

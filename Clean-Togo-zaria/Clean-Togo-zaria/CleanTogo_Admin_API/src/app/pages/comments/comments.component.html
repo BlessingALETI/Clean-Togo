@@ -1,0 +1,31 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Commentaires clients</h2>
+  </div>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<div class="ct-card" *ngIf="!loading">
+  <table class="table table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Note</th>
+        <th>Commentaire</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of list">
+        <td class="fw-semibold">{{ clientName(c.clientId) }}</td>
+        <td class="text-warning">{{ stars(c.rating) }}</td>
+        <td class="text-muted small">{{ c.message }}</td>
+        <td class="text-muted small">{{ c.createdAtISO }}</td>
+      </tr>
+      <tr *ngIf="list.length===0">
+        <td colspan="4"><app-table-empty message="Aucun commentaire."></app-table-empty></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

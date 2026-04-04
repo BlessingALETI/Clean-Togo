@@ -1,0 +1,111 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Gestion des chauffeurs</h2>
+    <div class="text-muted">Comptes chauffeurs + statut</div>
+  </div>
+
+  <button class="btn btn-success" (click)="openAdd()">+ Ajouter un chauffeur</button>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<div class="ct-card" *ngIf="!loading">
+  <table class="table table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+        <th>Zone</th>
+        <th>Statut</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let d of drivers">
+        <td class="fw-semibold">{{ d.nom }}</td>
+        <td>{{ d.prenom }}</td>
+        <td>{{ d.email }}</td>
+        <td>{{ d.phone }}</td>
+        <td>{{ d.quartier }}</td>
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'bg-success-subtle text-success': d.statut===true,
+              'bg-danger-subtle text-danger': d.statut===false
+            }">{{ d.statut ? 'Actif' : 'Suspendu' }}</span>
+        </td>
+
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" (click)="openEdit(d)">Modifier</button>
+            <button class="btn btn-outline-danger" (click)="remove(d)">Supprimer</button>
+          </div>
+        </td>
+      </tr>
+
+      <tr *ngIf="drivers.length===0">
+        <td colspan="7"><app-table-empty message="Aucun chauffeur."></app-table-empty></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal (Add/Edit) -->
+<div class="ct-modal-backdrop" *ngIf="modalOpen">
+  <div class="ct-modal">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold">
+        {{ editing ? 'Modifier un chauffeur' : 'Ajouter un chauffeur' }}
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="close()">X</button>
+    </div>
+
+    <div class="row g-2">
+      <div class="col-12 col-md-6">
+        <label class="form-label">Nom</label>
+        <input class="form-control" [(ngModel)]="form.nom" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Prénom</label>
+        <input class="form-control" [(ngModel)]="form.prenom" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" [(ngModel)]="form.email" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Téléphone</label>
+        <input class="form-control" [(ngModel)]="form.phone" placeholder="+228 ..." />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Nom d'utilisateur</label>
+        <input class="form-control" [(ngModel)]="form.username" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Zone</label>
+        <input class="form-control" [(ngModel)]="form.quartier" placeholder="Ex: Tokoin, Bè..." />
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Statut</label>
+        <select class="form-select" [(ngModel)]="form.statut">
+          <option [ngValue]="true">Actif</option>
+          <option [ngValue]="false">Suspendu</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-outline-secondary" (click)="close()">Annuler</button>
+      <button class="btn btn-success" (click)="save()">Enregistrer</button>
+    </div>
+  </div>
+</div>

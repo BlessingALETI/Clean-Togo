@@ -1,0 +1,121 @@
+.week-grid{
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 10px;
+  overflow: auto;
+  padding-bottom: 6px;
+}
+
+.day-col{
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  min-height: 160px;
+}
+
+.day-head{
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.day-title{ font-weight: 700; font-size: 12px; letter-spacing: .02em; }
+.day-date{ font-size: 11px; color: #6b7280; }
+
+.day-body{
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.chip{
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  transition: .12s;
+}
+.chip:hover{ transform: translateY(-1px); }
+
+.chip-zone{ font-weight: 700; font-size: 12px; }
+.chip-sub{ font-size: 11px; color: #6b7280; }
+
+.chip-soft{ background: #f8fafc; }
+.chip-warn{ background: rgba(255,193,7,.18); border-color: rgba(255,193,7,.35); }
+.chip-ok{ background: rgba(25,135,84,.12); border-color: rgba(25,135,84,.25); }
+
+.cards-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1200px){
+  .cards-grid{ grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+}
+@media (max-width: 768px){
+  .cards-grid{ grid-template-columns: 1fr; }
+}
+
+.tour-card{
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+}
+
+.tour-zone{
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.mini{
+  font-size: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+/* badges */
+.badge-soft{ background: #eef2f7; color:#334155; }
+.badge-warn{ background: rgba(255,193,7,.18); color:#8a6d00; }
+.badge-ok{ background: rgba(25,135,84,.12); color:#198754; }
+
+/* modal */
+.ct-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+}
+.ct-modal{
+  width: min(720px, 92vw);
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+/* drawer details */
+.ct-drawer-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 9998;
+  display: flex;
+  justify-content: flex-end;
+}
+.ct-drawer{
+  width: min(420px, 92vw);
+  background: #fff;
+  height: 100%;
+  padding: 14px;
+  border-left: 1px solid #e5e7eb;
+}

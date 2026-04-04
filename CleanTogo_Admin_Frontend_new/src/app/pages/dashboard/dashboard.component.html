@@ -1,0 +1,75 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Tableau de bord</h2>
+  </div>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<div class="row g-3" *ngIf="stats as s">
+  <div class="col-12 col-md-6 col-xl-3">
+    <app-stats-card title="Total clients" [value]="s.totalClients + ''" note="Actifs" badgeClass="badge-soft-success"></app-stats-card>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <app-stats-card title="Taux de collecte" [value]="s.tauxCollecte + '%'" note="Zones" badgeClass="badge-soft-success"></app-stats-card>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <app-stats-card title="Revenus mensuels" [value]="(s.revenusMensuelsFCFA | number) + ' FCFA'" note="Paiements" badgeClass="badge-soft-success"></app-stats-card>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <app-stats-card title="Taux d'impayés" [value]="s.tauxImpayes + '%'" note="Alertes" badgeClass="badge-soft-danger"></app-stats-card>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <!-- Graph collectes -->
+  <div class="col-12 col-xl-7">
+    <div class="ct-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <div class="fw-semibold">Collectes par zone</div>
+          <div class="text-muted small">Répartition des tournées (démo locale)</div>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle">Chart</span>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas #zoneChart></canvas>
+      </div>
+
+      <div class="small text-muted mt-2">
+      </div>
+    </div>
+  </div>
+
+
+  <div class="col-12 col-xl-5">
+    <div class="ct-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <div class="fw-semibold">Dernières actions</div>
+          <div class="text-muted small">Historique récent</div>
+        </div>
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Log</span>
+      </div>
+
+      <div class="ct-timeline">
+        <div class="ct-timeline-item" *ngFor="let a of actions">
+          <div class="ct-dot" [ngClass]="a.dotClass"></div>
+          <div class="ct-timeline-content">
+            <div class="d-flex justify-content-between gap-2">
+              <div class="fw-semibold">{{ a.title }}</div>
+              <div class="text-muted small">{{ a.time }}</div>
+            </div>
+            <div class="text-muted small">{{ a.desc }}</div>
+            <div class="mt-1">
+              <span class="badge" [ngClass]="a.badgeClass">{{ a.type }}</span>
+            </div>
+          </div>
+        </div>
+
+      
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,147 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Planification des tournées</h2>
+    <div class="text-muted">Vue semaine + attribution aux chauffeurs</div>
+  </div>
+
+  <button class="btn btn-success" (click)="openCreate()">+ Créer une tournée</button>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<!-- Vue semaine -->
+<div class="ct-card mb-3" *ngIf="!loading">
+  <div class="fw-semibold mb-2">Vue Semaine</div>
+
+  <div class="week-grid">
+    <div class="day-col" *ngFor="let d of week">
+      <div class="day-head">
+        <div class="day-title">{{ d.label }}</div>
+        <div class="day-date">{{ d.dateISO }}</div>
+      </div>
+
+      <div class="day-body">
+        <button class="chip"
+                *ngFor="let t of d.items"
+                (click)="openDetails(t)"
+                [ngClass]="t.status==='En cours' ? 'chip-warn' : (t.status==='Terminée' ? 'chip-ok' : 'chip-soft')">
+          <div class="chip-zone">{{ t.zone }}</div>
+          <div class="chip-sub">{{ driverName(t.driverId) }}</div>
+        </button>
+
+        <div class="text-muted small" *ngIf="d.items.length===0">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cards par tournée -->
+<div class="ct-card" *ngIf="!loading">
+  <div class="fw-semibold mb-2">Tournées</div>
+
+  <div class="cards-grid">
+    <div class="tour-card" *ngFor="let t of tours">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="tour-zone">{{ t.zone }}</div>
+          <div class="text-muted small">{{ t.dateISO }}</div>
+        </div>
+        <span class="badge" [ngClass]="statusClass(t.status)">{{ t.status }}</span>
+      </div>
+
+      <div class="mini mt-2">
+        <div><span class="text-muted">Chauffeur:</span> <b>{{ driverName(t.driverId) }}</b></div>
+        <div><span class="text-muted">Foyers:</span> <b>{{ t.foyersCount }}</b></div>
+      </div>
+
+      <div class="d-flex justify-content-between mt-3 gap-2">
+        <button class="btn btn-sm btn-outline-secondary w-100" (click)="openEdit(t)">Modifier</button>
+        <button class="btn btn-sm btn-success w-100" (click)="openDetails(t)">Détails</button>
+        <button class="btn btn-sm btn-outline-danger w-100" (click)="remove(t)">Supprimer</button>
+      </div>
+    </div>
+
+    <div *ngIf="tours.length===0" class="alert alert-secondary m-0">Aucune tournée.</div>
+  </div>
+</div>
+
+<!-- Modal Create/Edit -->
+<div class="ct-modal-backdrop" *ngIf="modalOpen">
+  <div class="ct-modal">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold">{{ editing ? 'Modifier une tournée' : 'Créer une tournée' }}</div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeModal()">X</button>
+    </div>
+
+    <div class="row g-2">
+      <div class="col-12 col-md-4">
+        <label class="form-label">Date</label>
+        <input class="form-control" type="date" [(ngModel)]="form.dateISO" />
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Zone</label>
+        <select class="form-select" [(ngModel)]="form.zone">
+  <option value="" disabled>Choisir une zone...</option>
+  <option *ngFor="let z of zones" [value]="z">{{ z }}</option>
+</select>
+
+<div class="text-muted small mt-1" *ngIf="zones.length===0">
+  Aucune zone trouvée. Ajoute d’abord des clients avec des quartiers.
+</div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Chauffeur</label>
+        <select class="form-select" [(ngModel)]="form.driverId">
+          <option [ngValue]="null">Non assigné</option>
+          <option *ngFor="let d of drivers" [ngValue]="d.id">{{ d.fullName }}</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Foyers</label>
+        <input class="form-control" type="number" [(ngModel)]="form.foyersCount" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Statut</label>
+        <select class="form-select" [(ngModel)]="form.status">
+          <option value="Planifiée">Planifiée</option>
+          <option value="En cours">En cours</option>
+          <option value="Terminée">Terminée</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-outline-secondary" (click)="closeModal()">Annuler</button>
+      <button class="btn btn-success" (click)="save()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer Détails -->
+<div class="ct-drawer-backdrop" *ngIf="details" (click)="closeDetails()">
+  <div class="ct-drawer" (click)="$event.stopPropagation()">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold">Détails tournée</div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeDetails()">X</button>
+    </div>
+
+    <div *ngIf="details as t" class="small">
+      <div class="mb-2"><span class="text-muted">Zone:</span> <b>{{ t.zone }}</b></div>
+      <div class="mb-2"><span class="text-muted">Date:</span> <b>{{ t.dateISO }}</b></div>
+      <div class="mb-2"><span class="text-muted">Chauffeur:</span> <b>{{ driverName(t.driverId) }}</b></div>
+      <div class="mb-2"><span class="text-muted">Foyers:</span> <b>{{ t.foyersCount }}</b></div>
+      <div class="mb-2"><span class="text-muted">Statut:</span> <b>{{ t.status }}</b></div>
+
+      <hr>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary w-100" (click)="openEdit(t)">Modifier</button>
+        <button class="btn btn-outline-danger w-100" (click)="remove(t)">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>

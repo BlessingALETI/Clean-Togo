@@ -1,0 +1,32 @@
+.ct-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+}
+
+.ct-modal{
+  width: min(720px, 92vw);
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+.ct-toast{
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  z-index: 10000;
+  font-size: 13px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.12);
+}
+.t-success{ border-color: rgba(25,135,84,.35); }
+.t-danger{ border-color: rgba(220,53,69,.35); }

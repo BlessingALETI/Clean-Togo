@@ -1,0 +1,11 @@
+<div class="h-100 d-flex align-items-center justify-content-between px-3">
+  <div class="d-flex align-items-center gap-2">
+    <span class="fw-semibold">Dashboard Admin</span>
+    <span class="badge bg-success-subtle text-success border border-success-subtle"></span>
+  </div>
+
+  <div class="d-flex align-items-center gap-2">
+    <div class="small text-muted" *ngIf="auth.currentUser() as u">{{ u.fullName }} • {{ u.email }}</div>
+    <button class="btn btn-sm btn-outline-danger" (click)="logout()">Déconnexion</button>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+.chart-wrap {
+  height: 280px;
+  width: 100%;
+}
+
+.ct-timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.ct-timeline-item {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.ct-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 6px;
+  background: #9ca3af;
+}
+
+.dot-success { background: #198754; }
+.dot-primary { background: #0d6efd; }
+.dot-danger  { background: #dc3545; }
+
+.ct-timeline-content {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}

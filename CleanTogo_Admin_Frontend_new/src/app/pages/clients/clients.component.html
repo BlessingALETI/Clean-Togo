@@ -1,0 +1,118 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Gestion des clients</h2>
+    <div class="text-muted">Comptes clients (abonnements, statut)</div>
+  </div>
+</div>
+
+<div class="ct-card mb-3">
+  <div class="d-flex gap-2">
+    <input class="form-control" [(ngModel)]="q" (input)="apply()" placeholder="Rechercher (nom, téléphone, quartier)..." />
+    <button class="btn btn-outline-secondary" (click)="q=''; apply()">Reset</button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+<div class="ct-card" *ngIf="!loading">
+  <table class="table table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let c of filtered">
+        <td class="fw-semibold">{{ c.nom }}</td>
+        <td>{{ c.prenom }}</td>
+        <td>{{ c.email }}</td>
+        <td>{{ c.phone }}</td>
+        <td><span class="badge bg-primary-subtle text-primary">{{ c.role }}</span></td>
+        <td>
+          <span class="badge"
+            [ngClass]="{
+              'bg-success-subtle text-success': c.statut===true,
+              'bg-danger-subtle text-danger': c.statut===false
+            }">{{ c.statut ? 'Actif' : 'Suspendu' }}</span>
+        </td>
+
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" (click)="openEdit(c)">Modifier</button>
+            <button class="btn btn-outline-danger" (click)="remove(c)">Supprimer</button>
+          </div>
+        </td>
+      </tr>
+
+      <tr *ngIf="filtered.length===0">
+        <td colspan="7"><app-table-empty message="Aucun client trouvé."></app-table-empty></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal Bootstrap simple (sans JS Bootstrap) -->
+<div class="ct-modal-backdrop" *ngIf="editing">
+  <div class="ct-modal">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold">Modifier un client</div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeEdit()">X</button>
+    </div>
+
+    <div class="row g-2">
+      <div class="col-12 col-md-6">
+        <label class="form-label">Nom</label>
+        <input class="form-control" [(ngModel)]="editForm.nom" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Prénom</label>
+        <input class="form-control" [(ngModel)]="editForm.prenom" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" [(ngModel)]="editForm.email" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Téléphone</label>
+        <input class="form-control" [(ngModel)]="editForm.phone" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Nom d'utilisateur</label>
+        <input class="form-control" [(ngModel)]="editForm.username" />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Rôle</label>
+        <select class="form-select" [(ngModel)]="editForm.role">
+          <option value="CLIENT">CLIENT</option>
+          <option value="CHAUFFEUR">CHAUFFEUR</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Statut</label>
+        <select class="form-select" [(ngModel)]="editForm.statut">
+          <option [ngValue]="true">Actif</option>
+          <option [ngValue]="false">Suspendu</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-outline-secondary" (click)="closeEdit()">Annuler</button>
+      <button class="btn btn-success" (click)="saveEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>

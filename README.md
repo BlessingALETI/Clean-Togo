@@ -81,6 +81,3 @@ ALABA Londou Micael
 ALI Moussa Abakar
 SAMAH Lotiyé Tov Emmanuel
 
-ADAMOU Aurore Leila Laraba
-Étudiante en Web Design, Infographie et Multimédia (WIM)
-IPNET Institute of Technology
